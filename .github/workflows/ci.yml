@@ -19,6 +19,11 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      checks: write      # Required by dorny/test-reporter to create check annotations
+      pull-requests: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,19 +52,22 @@ jobs:
         run: >
           dotnet test Boilerplate.sln
           --no-build
+          --no-restore
           --configuration Release
           --logger "trx;LogFileName=test-results.trx"
           --results-directory ./test-results
 
-      # Publish test results as a GitHub check so they appear in the PR summary.
+      # Publish test results as a GitHub check annotation.
+      # fail-on-error is false so an empty test suite (no tests yet) doesn't
+      # break the build — it will still show a warning in the PR check panel.
       - name: Publish test results
         uses: dorny/test-reporter@v1
-        if: always()   # Run even when tests fail so failures are always reported
+        if: always()
         with:
           name: xUnit Test Results
           path: ./test-results/*.trx
           reporter: dotnet-trx
-          fail-on-error: true
+          fail-on-error: false
 
   # ─────────────────────────────────────────────────────────────────────────────
   # JOB 2 — Docker build & push (only on pushes to main)
