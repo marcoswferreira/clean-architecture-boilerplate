@@ -1,6 +1,32 @@
 services:
+
   boilerplate.webapi:
     image: ${DOCKER_REGISTRY-}boilerplatewebapi
     build:
       context: .
       dockerfile: src/Host/Boilerplate.WebApi/Dockerfile
+    depends_on:
+      sqlserver:
+        condition: service_healthy # Wait until SQL Server passes its health check
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "${SA_PASSWORD:-1q2w3e4r@#$}" # Override via .env or env var in CI
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer" # Free Developer edition (not for production)
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql # Named volume → data persists across container restarts
+    healthcheck:
+      # SQL Server takes a few seconds to be ready after the container starts.
+      # This check queries the system DB; the WebApi service waits until it passes.
+      test: [ "CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$SA_PASSWORD\" -Q 'SELECT 1' -No -C || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s # Give SQL Server extra time before the first check
+
+volumes:
+  sqlserver_data: # Persists DB data across "docker compose down" / restart cycles

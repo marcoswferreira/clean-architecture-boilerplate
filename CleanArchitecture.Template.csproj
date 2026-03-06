@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>MarcosFerreira.CleanArchitecture.Template</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+    <Title>Clean Architecture Web API Template</Title>
+    <Description>
+      A production-ready Clean Architecture template for .NET 10 Web APIs.
+      Includes DDD, CQRS, EF Core SQL Server with auto-migration, API versioning,
+      Swagger, global exception handling, and Docker Compose support.
+    </Description>
+    <Authors>Marcos Ferreira</Authors>
+    <PackageTags>clean-architecture;ddd;cqrs;efcore;webapi;dotnet;template</PackageTags>
+    <PackageProjectUrl>https://github.com/MarcosFerreira17/clean-architecture-boilerplate</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MarcosFerreira17/clean-architecture-boilerplate</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+
+    <!-- Required for template packages -->
+    <PackageType>Template</PackageType>
+
+    <!-- No compilation needed — this project only packs files -->
+    <TargetFramework>net10.0</TargetFramework>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <ContentTargetFolders>content</ContentTargetFolders>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+  </PropertyGroup>
+
+  <!-- Include everything under the repo root as template content -->
+  <ItemGroup>
+    <Content Include="**\*" Exclude="**\bin\**;**\obj\**;.git\**;.vs\**;.idea\**;**\*.user;.gemini\**" />
+  </ItemGroup>
+
+  <!-- Include README and icon at the NuGet package root -->
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" Condition="Exists('icon.png')" />
+  </ItemGroup>
+
+</Project>

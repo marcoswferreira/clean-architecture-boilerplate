@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}   # e.g. marcosFerreira17/clean-architecture-boilerplate
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 1 — Build & Test
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Cache NuGet packages so subsequent runs are faster.
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'global.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore Boilerplate.sln
+
+      - name: Build
+        run: dotnet build Boilerplate.sln --no-restore --configuration Release
+
+      - name: Test
+        run: >
+          dotnet test Boilerplate.sln
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory ./test-results
+
+      # Publish test results as a GitHub check so they appear in the PR summary.
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()   # Run even when tests fail so failures are always reported
+        with:
+          name: xUnit Test Results
+          path: ./test-results/*.trx
+          reporter: dotnet-trx
+          fail-on-error: true
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 2 — Docker build & push (only on pushes to main)
+  # ─────────────────────────────────────────────────────────────────────────────
+  docker:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: build-and-test   # Only run if build & tests pass
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      packages: write   # Required to push to GHCR
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract metadata (tags + labels) for the image.
+      # Builds tags like: ghcr.io/owner/repo:latest, ghcr.io/owner/repo:sha-abc1234
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      # Build and push the image. Uses Buildx with layer caching.
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: src/Host/Boilerplate.WebApi/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha      # Use GitHub Actions cache for Docker layers
+          cache-to: type=gha,mode=max

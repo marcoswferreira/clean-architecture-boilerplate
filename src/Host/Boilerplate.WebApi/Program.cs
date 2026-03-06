@@ -1,11 +1,17 @@
 using Boilerplate.WebApi.Extensions;
+using Crosscutting.SqlServer.Extensions;
 using Microsoft.AspNetCore.Http.Features;
 using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// ── Infrastructure ────────────────────────────────────────────────────────────
+// Registers ApplicationDbContext with the SQL Server provider.
+// Reads the "Default" connection string from appsettings.json.
+builder.Services.AddSqlServerInfrastructure(builder.Configuration);
+
+// ── Presentation / API ───────────────────────────────────────────────────────
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -27,7 +33,13 @@ builder.Services.AddProblemDetails(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ── Database Migration ────────────────────────────────────────────────────────
+// Automatically applies any pending EF Core migrations before the app starts
+// serving requests. Safe to call on every startup — it's a no-op when the DB
+// is already up-to-date.
+await app.MigrateDatabaseAsync();
+
+// ── HTTP Pipeline ─────────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -35,5 +47,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.MapControllers();
 
 app.Run();
+

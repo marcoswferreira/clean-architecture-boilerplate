@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore.Query;
+﻿using Domain.Repositories;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
-namespace Crosscutting.SqlServer.Repositories.Interfaces;
+namespace Crosscutting.SqlServer.Repositories;
 
 
 public abstract class BaseRepository<T> : IBaseRepository<T> where T : class
@@ -21,9 +22,9 @@ public abstract class BaseRepository<T> : IBaseRepository<T> where T : class
         return _dbContext.SaveChanges() > 0;
     }
 
-    public IQueryable<T> Query(Expression<Func<T, bool>> predicate = null,
-                            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
-                            Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null,
+    public IQueryable<T> Query(Expression<Func<T, bool>>? predicate = null,
+                            Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+                            Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null,
                             bool enableTracking = true)
     {
         IQueryable<T> query = _dbSet;
@@ -58,7 +59,7 @@ public abstract class BaseRepository<T> : IBaseRepository<T> where T : class
 
     public T InsertNotExists(Expression<Func<T, bool>> predicate, T entity)
     {
-        if (_dbSet.Any(predicate)) return _dbSet.SingleOrDefault(predicate.Compile());
+        if (_dbSet.Any(predicate)) return _dbSet.First(predicate.Compile());
         _dbSet.Add(entity);
         return entity;
     }

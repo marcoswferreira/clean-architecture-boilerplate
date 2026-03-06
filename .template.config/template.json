@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Marcos Ferreira",
+  "description": "Clean Architecture .NET 10 Web API boilerplate featuring DDD, CQRS, EF Core, API versioning, Swagger, and auto-migration on startup.",
+  "identity": "MarcosFerreira.CleanArchitecture.WebApi",
+  "name": "Clean Architecture Web API",
+  "shortName": "clean-arch",
+  "language": "C#",
+  "type": "project",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "classifications": [
+    "Web API",
+    "Clean Architecture",
+    "DDD",
+    "CQRS",
+    "EF Core",
+    ".NET 10"
+  ],
+  "groupIdentity": "MarcosFerreira.CleanArchitecture",
+  "precedence": 100,
+  "sourceName": "Boilerplate",
+  "preferNameDirectory": true,
+  "symbols": {
+    "ProjectName": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "MyProject",
+      "replaces": "Boilerplate",
+      "fileRename": "Boilerplate",
+      "description": "The name of your project (used as namespace and solution prefix)."
+    },
+    "ProjectNameSafe": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "safe_name",
+      "replaces": "BoilerplateSafe",
+      "description": "C#-safe version of the project name."
+    },
+    "IncludeDocker": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include Dockerfile and docker-compose files."
+    },
+    "IncludeSqlServer": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include SQL Server EF Core infrastructure (DbContext, migrations, auto-migration on startup)."
+    },
+    "Framework": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "net10.0",
+      "description": "Target framework moniker.",
+      "choices": [
+        {
+          "choice": "net10.0",
+          "description": ".NET 10 (LTS)"
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "source": "./",
+      "target": "./",
+      "exclude": [
+        "**/[Bb]in/**",
+        "**/[Oo]bj/**",
+        ".git/**",
+        ".vs/**",
+        ".idea/**",
+        "**/*.user",
+        "**/node_modules/**",
+        ".template.config/**",
+        ".gemini/**"
+      ],
+      "modifiers": [
+        {
+          "condition": "(!IncludeDocker)",
+          "exclude": [
+            "**/Dockerfile",
+            "docker-compose*.yml",
+            "docker-compose.dcproj"
+          ]
+        },
+        {
+          "condition": "(!IncludeSqlServer)",
+          "exclude": [
+            "src/Infra/**"
+          ]
+        }
+      ]
+    }
+  ],
+  "postActions": [
+    {
+      "id": "restore",
+      "description": "Restores NuGet packages automatically after project creation.",
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true,
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore' to restore NuGet packages."
+        }
+      ]
+    }
+  ]
+}

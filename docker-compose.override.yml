@@ -1,14 +1,23 @@
 services:
+
   boilerplate.webapi:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      # Override the connection string so the WebApi container talks to the
+      # sqlserver container (by service name) instead of localhost.
+      - ConnectionStrings__Default=Server=sqlserver;Database=BoilerplateDb;User Id=sa;Password=1q2w3e4r@#$;TrustServerCertificate=True;MultipleActiveResultSets=true;
     ports:
-      - "8080"
-      - "8081"
+      - "8080:8080"
+      - "8081:8081"
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  sqlserver:
+    environment:
+      SA_PASSWORD: "1q2w3e4r@#$" # Development only — use Docker secrets or env vars in production
+      ACCEPT_EULA: "Y"

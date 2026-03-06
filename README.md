@@ -1,244 +1,398 @@
-# .NET Boilerplate Web API Documentation
+# .NET Boilerplate Web API
 
-## Introduction
-
-The **.NET Boilerplate Web API** is a project under development designed to serve as a starting point for building Web APIs using .NET or .NET Core, adhering to the principles of **Clean Architecture**. This boilerplate provides a structured foundation that incorporates modern architectural patterns and design principles, making it easier for developers to create robust, scalable, and maintainable applications. The key principles and patterns integrated into this boilerplate include:
-
-- **Hexagonal Architecture** (Ports and Adapters)
-- **Domain-Driven Design (DDD)**
-- **Command Query Responsibility Segregation (CQRS)**
-- **Event Sourcing (ES)**
-- **SOLID Principles**
-
-This documentation outlines the structure, components, and usage of the boilerplate, providing a comprehensive guide for developers looking to leverage its capabilities.
+A production-ready **Clean Architecture** template for .NET 10 Web APIs.  
+Built on **DDD**, **CQRS**, **Event Sourcing**, **Hexagonal Architecture**, and **SOLID** principles.
 
 ---
 
-## Project Overview
+## Table of Contents
 
-The .NET Boilerplate Web API is organized into distinct layers following Clean Architecture, ensuring a clear separation of concerns. The primary goal is to decouple business logic from infrastructure and presentation concerns, enhancing testability and maintainability. The layers are:
-
-1. **Domain Layer**: Contains the core business logic and domain models.
-2. **Application Layer**: Defines use cases and orchestrates application behavior.
-3. **Infrastructure Layer**: Implements external concerns like data persistence and services.
-4. **Presentation Layer**: Exposes the API endpoints to the outside world.
-
-These layers interact in a unidirectional flow, with dependencies pointing inward toward the domain layer, adhering to the Dependency Inversion Principle.
+- [Architecture Overview](#architecture-overview)
+- [Project Structure](#project-structure)
+- [Domain Layer](#domain-layer)
+- [Application Layer](#application-layer)
+- [Infrastructure Layer](#infrastructure-layer)
+- [Presentation Layer](#presentation-layer)
+- [Getting Started](#getting-started)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
 
 ---
 
-## Architectural Principles
+## Architecture Overview
 
-### Clean Architecture
+```
+┌─────────────────────────────────────────────────────────┐
+│                  Presentation (WebApi)                   │
+│              Controllers · DTOs · Swagger                │
+├─────────────────────────────────────────────────────────┤
+│                    Application Layer                     │
+│         Commands · Queries · Handlers · DTOs            │
+├─────────────────────────────────────────────────────────┤
+│                      Domain Layer                        │
+│   Entities · Value Objects · Events · Repositories      │
+├─────────────────────────────────────────────────────────┤
+│                  Infrastructure Layer                    │
+│         EF Core · DbContext · Repositories              │
+└─────────────────────────────────────────────────────────┘
+```
 
-**Clean Architecture** is the foundational philosophy of this boilerplate. It organizes the application into concentric layers, with the innermost layer (Domain) being independent of external systems. The key benefits include:
-
-- **Independence**: Business logic is isolated from frameworks, databases, and UI.
-- **Testability**: Layers can be tested in isolation.
-- **Maintainability**: Changes in one layer (e.g., database) don’t affect others.
-
-### Hexagonal Architecture (Ports and Adapters)
-
-**Hexagonal Architecture** enhances Clean Architecture by defining the application’s core logic as a hexagon surrounded by **ports** (interfaces) and **adapters** (implementations). This pattern ensures that the business logic remains agnostic to external systems, such as databases or APIs. For example:
-
-- A port might define a repository interface.
-- An adapter might implement that interface using Entity Framework Core.
-
-### Domain-Driven Design (DDD)
-
-**DDD** focuses on modeling the business domain within the software. The domain layer includes:
-
-- **Entities**: Objects with identity (e.g., a `Customer` with an ID).
-- **Value Objects**: Objects defined by attributes (e.g., an `Address`).
-- **Aggregates**: Groups of related entities treated as a single unit.
-- **Repositories**: Interfaces for data access (implemented in the infrastructure layer).
-
-This approach ensures that the code reflects the real-world domain it represents.
-
-### CQRS (Command Query Responsibility Segregation)
-
-**CQRS** separates operations that modify data (**commands**) from those that retrieve data (**queries**). This can improve performance and scalability by allowing separate optimization of read and write paths. For example:
-
-- A command might be `CreateCustomer`.
-- A query might be `GetCustomerById`.
-
-### Event Sourcing (ES)
-
-**Event Sourcing** stores the state of the application as a sequence of events rather than a single snapshot. Each event (e.g., `CustomerCreated`, `OrderPlaced`) is persisted, and the current state is derived by replaying these events. Benefits include:
-
-- Full audit trail of changes.
-- Ability to rebuild state or debug issues.
-
-### SOLID Principles
-
-The boilerplate adheres to the **SOLID** principles to ensure clean and maintainable code:
-
-- **S**: Single Responsibility Principle – Each class has one reason to change.
-- **O**: Open/Closed Principle – Classes are open for extension, closed for modification.
-- **L**: Liskov Substitution Principle – Subtypes can replace their base types without altering behavior.
-- **I**: Interface Segregation Principle – Clients depend only on interfaces they use.
-- **D**: Dependency Inversion Principle – High-level modules depend on abstractions, not implementations.
+Dependencies always point **inward** — Infrastructure and Presentation depend on the inner layers, never the reverse.
 
 ---
 
 ## Project Structure
 
-The project is divided into the following layers, each with specific responsibilities:
-
-### Domain Layer
-
-- **Purpose**: Encapsulates the business logic and domain models.
-- **Components**:
-  - **Entities**: Core objects like `Customer` or `Order`.
-  - **Value Objects**: Immutable objects like `Money` or `Email`.
-  - **Aggregates**: Roots like `Order` that enforce consistency boundaries.
-  - **Domain Services**: Logic that spans multiple entities.
-  - **Repository Interfaces**: Define data access contracts (e.g., `ICustomerRepository`).
-- **Key Feature**: Completely independent of external frameworks or technologies.
-
-### Application Layer
-
-- **Purpose**: Coordinates application behavior and defines use cases.
-- **Components**:
-  - **Application Services**: Execute business use cases (e.g., `OrderService`).
-  - **Commands**: Operations like `CreateOrderCommand`.
-  - **Queries**: Operations like `GetOrderDetailsQuery`.
-  - **Interfaces**: Contracts for infrastructure dependencies.
-- **Key Feature**: Implements CQRS by separating commands and queries.
-
-### Infrastructure Layer
-
-- **Purpose**: Handles external systems and technical details.
-- **Components**:
-  - **Repositories**: Implementations like `CustomerRepository` using a database.
-  - **Event Store**: Stores events if Event Sourcing is used (e.g., using a library like EventStoreDB).
-  - **External Services**: Adapters for APIs or message queues.
-- **Key Feature**: Provides concrete implementations of application-layer interfaces.
-
-### Presentation Layer
-
-- **Purpose**: Exposes the application via a Web API.
-- **Components**:
-  - **Controllers**: Handle HTTP requests (e.g., `CustomersController`).
-  - **DTOs**: Data Transfer Objects for request/response payloads.
-- **Key Feature**: Thin layer that delegates to the application layer.
-
----
-
-## Configuration and Setup
-
-To get started with the .NET Boilerplate Web API:
-
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/MarcosFerreira17/clean-architecture-boilerplate.git
-   ```
-
-2. **Restore Dependencies**:
-   ```bash
-   cd clean-architecture-boilerplate
-   dotnet restore
-   ```
-
-3. **Configure Environment**:
-   - Edit `appsettings.json` or set environment variables for:
-     - Database connection strings.
-     - External service credentials (e.g., API keys).
-   - Example:
-     ```json
-     {
-       "ConnectionStrings": {
-         "Default": "Server=localhost;Database=BoilerplateDb;Trusted_Connection=True;"
-       }
-     }
-     ```
-
-4. **Run the Application**:
-   ```bash
-   dotnet run --project src/Presentation
-   ```
-   - The API will be available at `http://localhost:5000` (default).
+```
+src/
+├── Core/
+│   ├── Domain/                      # Innermost layer — no dependencies
+│   │   ├── Entities/
+│   │   │   ├── BaseEntity.cs        # Base class with Id + domain events
+│   │   │   ├── IAggregateRoot.cs    # Marker interface for aggregate roots
+│   │   │   └── Customer.cs          # Sample aggregate root entity
+│   │   ├── Events/
+│   │   │   ├── IDomainEvent.cs      # Domain event marker interface
+│   │   │   └── Customers/
+│   │   │       └── CustomerCreatedEvent.cs
+│   │   ├── ValueObjects/
+│   │   │   ├── IValueObject.cs      # Value object marker interface
+│   │   │   └── Email.cs             # Sample value object with validation
+│   │   ├── Repositories/
+│   │   │   ├── IBaseRepository.cs   # Generic repository port (interface)
+│   │   │   └── ICustomerRepository.cs
+│   │   └── Common/
+│   │       └── Paginate/            # Pagination abstractions
+│   │
+│   └── Application/                 # Use cases — depends on Domain only
+│       ├── Commands/
+│       │   ├── ICommand.cs
+│       │   ├── ICommandHandler.cs
+│       │   └── Customers/
+│       │       ├── CreateCustomerCommand.cs
+│       │       └── CreateCustomerCommandHandler.cs
+│       ├── Queries/
+│       │   ├── IQuery.cs
+│       │   ├── IQueryHandler.cs
+│       │   └── Customers/
+│       │       ├── CustomerDto.cs
+│       │       ├── GetCustomerByIdQuery.cs
+│       │       └── GetCustomerByIdQueryHandler.cs
+│       ├── Services/
+│       │   └── IApplicationService.cs
+│       └── DTO/
+│           ├── Result.cs            # Non-generic result (success/failure)
+│           └── ResultGeneric.cs     # Generic result with typed value
+│
+├── Infra/
+│   └── Crosscutting.SqlServer/      # EF Core adapter — depends on Domain
+│       ├── DbContexts/
+│       │   └── ApplicationDbContext.cs
+│       └── Repositories/
+│           ├── BaseRepository.cs    # Generic EF Core repository
+│           └── CustomerRepository.cs
+│
+├── Host/
+│   └── Boilerplate.WebApi/          # Presentation — depends on Application + Infra
+│       ├── Controllers/
+│       │   └── CustomersController.cs
+│       ├── Extensions/
+│       │   └── AppExtensions.cs    # Swagger + versioning setup
+│       ├── ExceptionHandler.cs
+│       └── Program.cs
+│
+└── Tests/
+    └── Unit.Tests/
+```
 
 ---
 
-## API Usage
+## Domain Layer
 
-The Web API follows RESTful conventions. Example endpoints:
+The **innermost layer** — has zero dependencies on any other project or NuGet package (except EF Core for `IQueryable` pagination helpers).
 
-- **Create a Customer**:
-  ```
-  POST /api/customers
-  {
-    "name": "John Doe",
-    "email": "john.doe@example.com"
+### `BaseEntity`
+
+Every domain entity inherits from `BaseEntity`. It provides:
+
+- **`Id`** — `Guid`, initialized on construction; never changes.
+- **Domain Events** — entities raise events via `AddDomainEvent()`. Events are dispatched *after* persistence to guarantee consistency.
+- **Identity Equality** — two entities are equal if they share the same `Id`, regardless of other properties.
+
+```csharp
+public class Order : BaseEntity, IAggregateRoot
+{
+    public void Place()
+    {
+        // ... business logic ...
+        AddDomainEvent(new OrderPlacedEvent(Id));
+    }
+}
+```
+
+### `IAggregateRoot`
+
+Marker interface. Apply it to entities that are the **boundary** of a consistency group (e.g., `Order` owns `OrderLine`s). External code must always interact through the aggregate root, never with its internal entities directly.
+
+### `IDomainEvent`
+
+Marker interface for domain events. Events must be:
+- **Immutable** — use C# `record` types.
+- **Named in past tense** — `CustomerCreated`, `OrderPlaced`, `PaymentFailed`.
+
+Events carry only the data needed by downstream handlers. They decouple the producer from consumers.
+
+### `IValueObject` and `Email` (sample)
+
+A **Value Object** is defined entirely by its attributes, has no identity, and is always immutable:
+
+```csharp
+var email = Email.Create("user@example.com"); // validated, normalized
+string raw = email;                           // implicit string conversion
+```
+
+`Email.Create()` throws `ArgumentException` on invalid input — making invalid state unrepresentable.
+
+### `IBaseRepository<T>` and `ICustomerRepository` (sample)
+
+Repository interfaces live in the **Domain** layer (the port definition). This keeps domain logic free of any persistence detail.
+
+| Method | Description |
+|---|---|
+| `Query(predicate, orderBy, include, enableTracking)` | Composable LINQ query with optional filter, sort, and eager-load |
+| `Insert(entity)` | Stages entity for insert; call `SaveChanges()` to persist |
+| `InsertNotExists(predicate, entity)` | Idempotent insert — returns existing if found |
+| `Update(entity)` | Marks entity as modified |
+| `Delete(entity)` | Stages entity for deletion |
+| `Delete(IEnumerable<T>)` | Stages a collection for deletion |
+| `SaveChanges()` | Commits all pending changes; returns `true` if rows affected |
+
+Create domain-specific interfaces that extend `IBaseRepository<T>`:
+
+```csharp
+public interface IOrderRepository : IBaseRepository<Order>
+{
+    Task<IEnumerable<Order>> GetPendingOrdersAsync(CancellationToken ct = default);
+}
+```
+
+---
+
+## Application Layer
+
+Coordinates **use cases** using Domain objects and repository ports. Never contains business rules — those belong in entities.
+
+### `Result` and `ResultGeneric<T>`
+
+Every handler returns a `Result` or `ResultGeneric<T>` to provide a uniform response contract:
+
+```csharp
+// Failure
+return Result.Failure("Email already exists.");
+
+// Success with value
+return ResultGeneric<Guid>.Success(customer.Id);
+```
+
+### Commands — CQRS Write Side
+
+A **Command** is an intent to change state. It uses `ICommand` / `ICommandHandler<TCommand, TResult>`:
+
+```csharp
+// Define the command
+public record CreateCustomerCommand(string Name, string Email) : ICommand<Guid>;
+
+// Implement the handler
+public class CreateCustomerCommandHandler(ICustomerRepository repo)
+    : ICommandHandler<CreateCustomerCommand, Guid>
+{
+    public async Task<ResultGeneric<Guid>> HandleAsync(CreateCustomerCommand cmd, CancellationToken ct)
+    {
+        var customer = Customer.Create(cmd.Name, cmd.Email);
+        repo.Insert(customer);
+        repo.SaveChanges();
+        return ResultGeneric<Guid>.Success(customer.Id);
+    }
+}
+```
+
+**Rules:**
+- Commands **mutate** state, never return domain entities.
+- Handlers are processed 1-to-1 (one command → one handler).
+- Register in DI: `services.AddScoped<ICommandHandler<CreateCustomerCommand, Guid>, CreateCustomerCommandHandler>()`
+
+### Queries — CQRS Read Side
+
+A **Query** reads state without side effects. It uses `IQuery<TResult>` / `IQueryHandler<TQuery, TResult>`:
+
+```csharp
+public record GetCustomerByIdQuery(Guid CustomerId) : IQuery<CustomerDto>;
+```
+
+The handler projects the domain entity to a **DTO** — never expose raw entities outside the application layer.
+
+### `IApplicationService`
+
+Marker interface for Application Services — higher-level orchestrators that may coordinate multiple use cases. In a strict CQRS design, prefer individual `CommandHandler`/`QueryHandler` classes per use case over a monolithic service.
+
+---
+
+## Infrastructure Layer
+
+Implements all **ports** defined in the Domain layer. Depends on both Domain and EF Core.
+
+### `ApplicationDbContext`
+
+The EF Core `DbContext`. Add `DbSet<T>` for each aggregate root and configure mappings in `OnModelCreating`:
+
+```csharp
+public DbSet<Customer> Customers => Set<Customer>();
+
+protected override void OnModelCreating(ModelBuilder builder)
+{
+    builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+}
+```
+
+### `BaseRepository<T>`
+
+Provides full generic CRUD for any entity. Concrete repositories inherit from it and implement domain-specific interfaces:
+
+```csharp
+public class OrderRepository(ApplicationDbContext ctx)
+    : BaseRepository<Order>(ctx), IOrderRepository
+{
+    public async Task<IEnumerable<Order>> GetPendingOrdersAsync(CancellationToken ct = default)
+        => await _dbSet.AsNoTracking().Where(o => o.Status == OrderStatus.Pending).ToListAsync(ct);
+}
+```
+
+**Key patterns demonstrated in `CustomerRepository`:**
+- `FindByEmailAsync` — case-insensitive lookup with `AsNoTracking()` for read performance
+- `GetAllActiveAsync` — filtered query via `Where` predicate
+
+### DI Registration
+
+Register infrastructure services in `Program.cs` (or a dedicated extension method):
+
+```csharp
+builder.Services.AddDbContext<ApplicationDbContext>(opt =>
+    opt.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<ICommandHandler<CreateCustomerCommand, Guid>, CreateCustomerCommandHandler>();
+builder.Services.AddScoped<IQueryHandler<GetCustomerByIdQuery, CustomerDto>, GetCustomerByIdHandler>();
+```
+
+---
+
+## Presentation Layer
+
+Thin HTTP layer — controllers accept input, forward to handlers, and return HTTP responses.
+
+### `CustomersController` (sample)
+
+Shows the full REST pattern with API versioning:
+
+```
+GET  /api/v1/customers/{id}  → 200 OK (CustomerDto) | 404 Not Found
+POST /api/v1/customers       → 201 Created (Guid)   | 400 Bad Request
+```
+
+**Controller rules:**
+- Zero business logic.
+- Always delegates to a command/query handler.
+- Returns `Result`-based responses with appropriate HTTP status codes.
+
+### `ExceptionHandler`
+
+Global exception handler converts unhandled exceptions to [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807) **ProblemDetails** responses:
+- `ArgumentException` → `400 Bad Request`
+- All others → `500 Internal Server Error`
+
+### Swagger + API Versioning
+
+Swagger UI is available at `/swagger` in Development mode. API versioning is configured via URL segment (`/api/v1/`) and `X-Api-Version` header.
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- SQL Server (or update `ApplicationDbContext` to use another provider)
+
+### Setup
+
+```bash
+git clone https://github.com/MarcosFerreira17/clean-architecture-boilerplate.git
+cd clean-architecture-boilerplate
+dotnet restore
+```
+
+Configure your database connection in `appsettings.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    "Default": "Server=localhost;Database=BoilerplateDb;Trusted_Connection=True;"
   }
-  ```
+}
+```
 
-- **Get a Customer**:
-  ```
-  GET /api/customers/{id}
-  ```
+Run the application:
 
-Responses are returned in JSON format, with appropriate HTTP status codes (e.g., `201 Created`, `200 OK`).
+```bash
+dotnet run --project src/Host/Boilerplate.WebApi
+```
+
+The API is available at `http://localhost:5000`. Swagger UI at `http://localhost:5000/swagger`.
 
 ---
 
 ## Testing
 
-The boilerplate includes a testing framework:
+Unit tests live in `src/Tests/Unit.Tests`. Run with:
 
-- **Unit Tests**: Test domain logic and application services.
-  - Location: `tests/Domain.Tests`, `tests/Application.Tests`.
-- **Integration Tests**: Test interactions with infrastructure (e.g., database).
-  - Location: `tests/Infrastructure.Tests`.
-- **End-to-End Tests**: Test the full API workflow.
-  - Location: `tests/EndToEnd.Tests`.
-
-Run tests with:
 ```bash
 dotnet test
 ```
+
+### Recommended Test Targets
+
+| Layer | What to test |
+|---|---|
+| Domain | Entity factory methods, value object validation, domain event assertions |
+| Application | Command handler flows, query projections, boundary conditions |
+| Infrastructure | Repository queries against an in-memory or test DB |
 
 ---
 
 ## Deployment
 
-To deploy the application:
+```bash
+dotnet publish src/Host/Boilerplate.WebApi --configuration Release --output ./publish
+```
 
-1. **Build**:
-   ```bash
-   dotnet build --configuration Release
-   ```
+Docker:
 
-2. **Publish**:
-   ```bash
-   dotnet publish --configuration Release --output ./publish
-   ```
-
-3. **Deploy**:
-   - Copy the `publish` folder to your server.
-   - Configure the hosting environment (e.g., IIS, Kestrel, Docker).
-   - Example Docker deployment:
-     ```dockerfile
-     FROM mcr.microsoft.com/dotnet/aspnet:6.0
-     COPY ./publish /app
-     WORKDIR /app
-     ENTRYPOINT ["dotnet", "Presentation.dll"]
-     ```
-
-4. **Set Environment Variables**:
-   - Ensure database connections and other settings are configured on the server.
+```dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+COPY ./publish /app
+WORKDIR /app
+ENTRYPOINT ["dotnet", "Boilerplate.WebApi.dll"]
+```
 
 ---
 
 ## Contributing
 
-Contributions are encouraged! Follow these steps:
-
 1. Fork the repository.
-2. Create a feature branch: `git checkout -b feature/my-feature`.
-3. Commit changes: `git commit -m "Add my feature"`.
-4. Push to your fork: `git push origin feature/my-feature`.
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit changes: `git commit -m "Add my feature"`
+4. Push to your fork: `git push origin feature/my-feature`
 5. Submit a pull request.
 
 Please include tests and follow the existing code style.

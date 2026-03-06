@@ -1,0 +1,48 @@
+name: Publish NuGet Template
+
+on:
+  release:
+    types: [ published ]   # Triggered when a GitHub Release is published
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  NUGET_FEED: https://api.nuget.org/v3/index.json
+
+jobs:
+  publish-template:
+    name: Pack & Publish Template
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # The release tag (e.g. v1.2.3) is used as the NuGet package version.
+      # Strip the leading "v" so NuGet receives "1.2.3".
+      - name: Set package version from release tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      # Pack the template into a .nupkg file.
+      # The nuspec/csproj reads the VERSION from the environment variable.
+      - name: Pack template
+        run: >
+          dotnet pack
+          CleanArchitecture.Template.csproj
+          --configuration Release
+          /p:PackageVersion=${{ steps.version.outputs.VERSION }}
+          --output ./nupkg
+
+      # Push to NuGet.org.
+      # NUGET_API_KEY must be added as a repository secret: Settings → Secrets → Actions
+      - name: Push to NuGet.org
+        run: >
+          dotnet nuget push ./nupkg/*.nupkg
+          --api-key ${{ secrets.NUGET_API_KEY }}
+          --source ${{ env.NUGET_FEED }}
+          --skip-duplicate
